@@ -1,0 +1,46 @@
+#cdc-container {
+    height: 500px;
+    width: 400px;
+    margin: 0 auto;
+    border:1px solid gray;
+}
+
+.cdc-svg {
+    width: 100%;
+    height: 100%;
+}
+
+.cdc-station {
+    stroke: grey;
+}
+
+.cdc-fill-working {
+    fill: lightseagreen;
+}
+
+.cdc-fill-blocked {
+    fill: palevioletred;
+}
+
+.cdc-fill-empty {
+    fill: lightgray;
+}
+
+.cdc-widget-progress {
+    fill: blue;
+}
+
+.cdc-widget-outer-circle {
+    fill: white;
+    stroke: black;
+}
+
+text {
+    font-family:'Apercu', Tahoma, Geneva, Verdana, sans-serif; 
+}
+.cdc-color-text {
+    text-anchor: end;
+}
+.cdc-is-bottleneck {
+    font-style: italic;
+}
