@@ -10,6 +10,8 @@ const legendBlockHeight = 16;
 
 const widgetRadius = stationWidth / 3;
 
+let currWidgetIndex = 0;
+
 const PROCESSING_STATES = {
     WORKING: 'working',
     EMPTY: 'empty',
@@ -60,7 +62,7 @@ function getStationY (stationIndex) {
 
 function drawWidgets (stationsGroup, widgetsState) {
     const widgets = stationsGroup.selectAll('.cdc-widget-group')
-        .data(widgetsState);
+        .data(widgetsState, (widget) => widget.widgetIndex);
     widgets.enter()
         .append('g')
         .attr('class', 'cdc-widget-group')
@@ -82,7 +84,11 @@ function drawWidgets (stationsGroup, widgetsState) {
                 .append('path')
                 .attr('class', 'cdc-widget-progress')
                 .merge(arc)
+                .filter((widget) => {
+                    return widget.elapsedProcessingTime === 0;
+                })
                 .transition()
+                .ease(d3.easeSin)
                 .duration((widget) => widget.station === bottleneckIndex ? bottleneckTime : normalTime)
                 .attrTween("d", (widget) => {
                     const widgetDuration = widget.station === bottleneckIndex ? bottleneckTime : normalTime
@@ -107,11 +113,13 @@ function drawWidgets (stationsGroup, widgetsState) {
 
 function runSimulation (svg) {
     let widgetsState = [];
-    for (var i = -100; i < 0; i++) {
+    for (var i = -6; i < 0; i++) {
         widgetsState.push({
             station: i,
-            elapsedProcessingTime: 0
+            elapsedProcessingTime: 0,
+            widgetIndex: currWidgetIndex
         });
+        currWidgetIndex += 1;
     }
 
     function initializeStationsData () {
@@ -138,11 +146,21 @@ function runSimulation (svg) {
                 }
             }
             // check to see if next space is available, or if next space will be complete
-            if (widgetsState[i - 1]?.station !== widgetState.station + 1 || widgetState.station === numStations - 1) {
+            if (widgetsState[i - 1]?.station !== widgetState.station + 1 || widgetState.station >= numStations - 1) {
                 widgetState.elapsedProcessingTime = 0;
-                widgetState.station = Math.min(widgetState.station + 1, numStations);    
+                widgetState.station = widgetState.station + 1;    
             }
         });
+
+        widgetsState = widgetsState.filter((widgetState) => {
+            return widgetState.station <= numStations;
+        });
+
+        //hardcoded right now, replenishment 
+        if (widgetsState.length < 6) {
+            widgetsState.push({station: -2, elapsedProcessingTime: 0, widgetIndex: currWidgetIndex});
+            currWidgetIndex += 1;
+        }
         return widgetsState.reverse();
     }
 
@@ -206,7 +224,7 @@ function renderBottleneck () {
                     colorText.enter()
                         .append('text')
                         .attr('class', 'cdc-color-text')
-                        .attr('y', '-4')
+                        .attr('y', '-3')
                         .text(colorGroupName => legendTextMap[colorGroupName]);
                     colorText.exit().remove();
 
@@ -243,7 +261,6 @@ function renderBottleneck () {
         .classed('cdc-is-bottleneck', (d, i) => i === bottleneckIndex)
         .text((d) => `${d} second${d === 1 ? '' : 's'}`);
     processingTimeTexts.exit().remove();
-
 
     return runSimulation(svg);
 }
